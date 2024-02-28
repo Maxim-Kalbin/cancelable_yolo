@@ -339,8 +339,12 @@ class BaseTrainer:
             base_idx = (self.epochs - self.args.close_mosaic) * nb
             self.plot_idx.extend([base_idx, base_idx + 1, base_idx + 2])
         epoch = self.start_epoch
+
+        canceled = False
+
         while True:
             if False if should_cancel is None else should_cancel():
+                canceled = True
                 print('Training was canceled')
                 break
             self.epoch = epoch
@@ -468,7 +472,7 @@ class BaseTrainer:
                 f"{(time.time() - self.train_time_start) / 3600:.3f} hours."
             )
             self.final_eval()
-            if self.args.plots:
+            if not canceled and self.args.plots:
                 self.plot_metrics()
             self.run_callbacks("on_train_end")
         torch.cuda.empty_cache()
