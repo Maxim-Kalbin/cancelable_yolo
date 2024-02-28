@@ -170,8 +170,11 @@ class BaseTrainer:
         for callback in self.callbacks.get(event, []):
             callback(self)
 
-    def train(self):
+    def train(self, should_cancel):
         """Allow device='', device=None on Multi-GPU systems to default to device=0."""
+
+        print('launched right method')
+
         if isinstance(self.args.device, str) and len(self.args.device):  # i.e. device='0' or device='0,1,2,3'
             world_size = len(self.args.device.split(","))
         elif isinstance(self.args.device, (tuple, list)):  # i.e. device=[0, 1, 2, 3] (multi-GPU from CLI is list)
@@ -205,7 +208,7 @@ class BaseTrainer:
                 ddp_cleanup(self, str(file))
 
         else:
-            self._do_train(world_size)
+            self._do_train(world_size, should_cancel)
 
     def _setup_scheduler(self):
         """Initialize training learning rate scheduler."""
@@ -315,7 +318,7 @@ class BaseTrainer:
         self.scheduler.last_epoch = self.start_epoch - 1  # do not move
         self.run_callbacks("on_pretrain_routine_end")
 
-    def _do_train(self, world_size=1):
+    def _do_train(self, should_cancel, world_size=1):
         """Train completed, evaluate and plot if specified by arguments."""
         if world_size > 1:
             self._setup_ddp(world_size)
@@ -339,6 +342,8 @@ class BaseTrainer:
             self.plot_idx.extend([base_idx, base_idx + 1, base_idx + 2])
         epoch = self.start_epoch
         while True:
+            if should_cancel():
+                break
             self.epoch = epoch
             self.run_callbacks("on_train_epoch_start")
             self.model.train()
