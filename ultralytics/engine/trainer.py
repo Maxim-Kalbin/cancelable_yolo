@@ -206,7 +206,7 @@ class BaseTrainer:
                 ddp_cleanup(self, str(file))
 
         else:
-            self._do_train(world_size, should_cancel=should_cancel)
+            self._do_train(world_size=world_size, should_cancel=should_cancel)
 
     def _setup_scheduler(self):
         """Initialize training learning rate scheduler."""
